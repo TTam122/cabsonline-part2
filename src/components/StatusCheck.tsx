@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from '../config';
 
 interface Booking {
   brn: string;
@@ -37,9 +38,7 @@ export default function StatusCheck() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `https://cabsonline-part2-production.up.railway.app/api/status?brn=${brn}`
-      );
+      const response = await fetch(`${API_URL}/api/status?brn=${brn}`);
       const data = await response.json();
 
       if (data.success) {
@@ -84,6 +83,10 @@ export default function StatusCheck() {
             <tr>
               <th>Customer Name</th>
               <td>{booking.cname}</td>
+            </tr>
+            <tr>
+              <th>Phone</th>
+              <td>{booking.phone}</td>
             </tr>
             <tr>
               <th>Pickup Address</th>

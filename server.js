@@ -151,9 +151,10 @@ app.post('/api/admin/search', async (req, res) => {
     } else {
       [rows] = await db.execute(
         `SELECT * FROM bookings 
-                 WHERE TIMESTAMP(pickup_date, pickup_time) 
-                 BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 2 HOUR)`
-      );
+         WHERE TIMESTAMP(pickup_date, pickup_time) 
+         BETWEEN DATE_ADD(NOW(), INTERVAL 12 HOUR) 
+         AND DATE_ADD(NOW(), INTERVAL 14 HOUR)`
+    );
     }
 
     const formatted = rows.map((row) => {
