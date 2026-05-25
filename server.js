@@ -227,9 +227,10 @@ app.post('/api/payment', async (req, res) => {
 
       res.json({ success: true, brn });
 
-  } catch (err) {
-      res.json({ success: false, error: 'Payment could not be completed. Please try again.' });
-  }
+    } catch (err) {
+      console.error('Payment error:', err);
+      res.json({ success: false, error: err.message });
+    }
 });
 
 app.listen(3000, () => console.log('Server running on port 3000'));
