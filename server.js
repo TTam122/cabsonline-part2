@@ -196,39 +196,104 @@ app.post('/api/admin/assign', async (req, res) => {
 
 // --- PAYMENT ---
 app.post('/api/payment', async (req, res) => {
-    const { brn } = req.body;
+  const { brn } = req.body;
 
-    if (!brn || !/^BRN\d{5}$/.test(brn)) {
-        return res.json({ success: false, error: 'Invalid booking reference number format.' });
+  if (!brn || !/^BRN\d{5}$/.test(brn)) {
+    return res.json({ success: false, error: 'Invalid booking reference number format.' });
+  }
+
+  const id = parseInt(brn.substring(3));
+
+  try {
+    const [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
+
+    if (rows.length === 0) {
+      return res.json({ success: false, error: `No booking found for ${brn}.` });
     }
 
-    const id = parseInt(brn.substring(3));
+    const booking = rows[0];
 
-    try {
-        const [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
-
-        if (rows.length === 0) {
-            return res.json({ success: false, error: `No booking found for ${brn}.` });
-        }
-
-        const booking = rows[0];
-
-        if (booking.status === 'unassigned') {
-            return res.json({ success: false, error: 'Your booking has not been assigned yet. Please wait.' });
-        }
-
-        if (booking.status === 'paid') {
-            return res.json({ success: false, error: 'This booking has already been paid.' });
-        }
-
-        await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['paid', id]);
-
-        res.json({ success: true, brn });
-
-    } catch (err) {
-        console.error('Payment error:', err);
-        res.json({ success: false, error: err.message });
+    if (booking.status === 'unassigned') {
+      return res.json({ success: false, error: 'Your booking has not been assigned yet. Please wait.' });
     }
+
+    if (booking.status === 'paid') {
+      return res.json({ success: false, error: 'This booking has already been paid.' });
+    }
+
+    await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['paid', id]);
+
+    res.json({ success: true, brn });
+
+  } catch (err) {
+    console.error('Payment error:', err);
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// --- DRIVER: GET AVAILABLE BOOKINGS ---
+app.get('/api/driver/bookings', async (req, res) => {
+  try {
+      const [rows] = await db.execute(
+          `SELECT * FROM bookings WHERE status = 'unassigned' ORDER BY pickup_date, pickup_time ASC`
+      );
+
+      const formatted = rows.map((row) => {
+          const displayDate = formatDate(row.pickup_date);
+          const timeParts = row.pickup_time.split(':');
+          const displayTime = `${timeParts[0]}:${timeParts[1]}`;
+
+          return {
+              brn:         `BRN${String(row.id).padStart(5, '0')}`,
+              cname:       row.cname,
+              phone:       row.phone,
+              snumber:     row.snumber,
+              stname:      row.stname,
+              sbname:      row.sbname,
+              dsbname:     row.dsbname,
+              pickup_date: displayDate,
+              pickup_time: displayTime,
+              status:      row.status
+          };
+      });
+
+      res.json({ success: true, bookings: formatted });
+
+  } catch (err) {
+      console.error('Driver bookings error:', err);
+      res.json({ success: false, error: err.message });
+  }
+});
+
+// --- DRIVER: CLAIM A BOOKING ---
+app.post('/api/driver/claim', async (req, res) => {
+  const { brn } = req.body;
+
+  if (!brn || !/^BRN\d{5}$/.test(brn)) {
+      return res.json({ success: false, error: 'Invalid booking reference number format.' });
+  }
+
+  const id = parseInt(brn.substring(3));
+
+  try {
+      const [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
+
+      if (rows.length === 0) {
+          return res.json({ success: false, error: `No booking found for ${brn}.` });
+      }
+
+      if (rows[0].status !== 'unassigned') {
+          return res.json({ success: false, error: `Booking ${brn} has already been claimed.` });
+      }
+
+      await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['assigned', id]);
+
+      res.json({ success: true, brn });
+
+  } catch (err) {
+      console.error('Driver claim error:', err);
+      res.json({ success: false, error: err.message });
+  }
 });
 
 app.listen(3000, () => console.log('Server running on port 3000'));
