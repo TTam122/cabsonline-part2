@@ -194,4 +194,42 @@ app.post('/api/admin/assign', async (req, res) => {
   }
 });
 
+// --- PAYMENT ---
+app.post('/api/payment', async (req, res) => {
+  const { brn } = req.body;
+
+  if (!brn || !/^BRN\d{5}$/.test(brn)) {
+      return res.json({ success: false, error: 'Invalid booking reference number format.' });
+  }
+
+  const id = parseInt(brn.substring(3));
+
+  try {
+      // Check current status first
+      const [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
+
+      if (rows.length === 0) {
+          return res.json({ success: false, error: `No booking found for ${brn}.` });
+      }
+
+      const booking = rows[0];
+
+      if (booking.status === 'unassigned') {
+          return res.json({ success: false, error: 'Your booking has not been assigned yet. Please wait.' });
+      }
+
+      if (booking.status === 'paid') {
+          return res.json({ success: false, error: 'This booking has already been paid.' });
+      }
+
+      // Update status to paid
+      await db.execute('UPDATE bookings SET status = ? WHERE id = ?', ['paid', id]);
+
+      res.json({ success: true, brn });
+
+  } catch (err) {
+      res.json({ success: false, error: 'Payment could not be completed. Please try again.' });
+  }
+});
+
 app.listen(3000, () => console.log('Server running on port 3000'));
