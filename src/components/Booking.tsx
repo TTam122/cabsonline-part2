@@ -13,18 +13,16 @@ export default function Booking() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [message, setMessage] = useState('');
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pickupAddress, setPickupAddress] = useState('');
 
-  // Pre-fill date and time on load
   useEffect(() => {
     const now = new Date();
-
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     setDate(`${day}/${month}/${year}`);
-
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     setTime(`${hours}:${minutes}`);
@@ -32,46 +30,26 @@ export default function Booking() {
 
   async function submitBooking() {
     setMessage('');
+    setSuccess(false);
+    setPickupAddress('');
 
-    // Validation
-    if (cname.trim() === '') {
-      setMessage('Error: Customer name is required.');
-      return;
-    }
-    if (phone.trim() === '') {
-      setMessage('Error: Phone number is required.');
-      return;
-    }
-    if (snumber.trim() === '') {
-      setMessage('Error: Street number is required.');
-      return;
-    }
-    if (stname.trim() === '') {
-      setMessage('Error: Street name is required.');
-      return;
-    }
-    if (date.trim() === '') {
-      setMessage('Error: Pickup date is required.');
-      return;
-    }
-    if (time.trim() === '') {
-      setMessage('Error: Pickup time is required.');
-      return;
-    }
+    if (cname.trim() === '') { setMessage('Customer name is required.'); return; }
+    if (phone.trim() === '') { setMessage('Phone number is required.'); return; }
+    if (snumber.trim() === '') { setMessage('Street number is required.'); return; }
+    if (stname.trim() === '') { setMessage('Street name is required.'); return; }
+    if (date.trim() === '') { setMessage('Pickup date is required.'); return; }
+    if (time.trim() === '') { setMessage('Pickup time is required.'); return; }
 
-    // Phone validation
     const phoneRegex = /^\d{10,12}$/;
     if (!phoneRegex.test(phone.trim())) {
-      setMessage('Error: Phone number must be all digits and between 10 to 12 characters long.');
+      setMessage('Phone number must be all digits and between 10 to 12 characters long.');
       return;
     }
 
-    // Date and time not in the past
     const dateParts = date.split('/');
     const timeParts = time.split(':');
-
     if (dateParts.length !== 3 || timeParts.length !== 2) {
-      setMessage('Error: Please enter date as DD/MM/YYYY and time as HH:MM.');
+      setMessage('Please enter date as DD/MM/YYYY and time as HH:MM.');
       return;
     }
 
@@ -84,99 +62,93 @@ export default function Booking() {
     );
 
     if (pickupDateTime < new Date()) {
-      setMessage('Error: Pickup date and time cannot be in the past.');
+      setMessage('Pickup date and time cannot be in the past.');
       return;
     }
 
-    // Send to server
     setLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/api/booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cname, phone, unumber, snumber,
-          stname, sbname, dsbname, date, time
-        })
+        body: JSON.stringify({ cname, phone, unumber, snumber, stname, sbname, dsbname, date, time })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setMessage(
-          `Thank you for your booking!\n` +
-          `Booking reference number: ${data.brn}\n` +
-          `Pickup time: ${data.pickup_time}\n` +
-          `Pickup date: ${data.pickup_date}`
-        );
+        setSuccess(true);
+        setMessage(`Booking reference number: ${data.brn}\nPickup time: ${data.pickup_time}\nPickup date: ${data.pickup_date}`);
         setPickupAddress(`${snumber} ${stname} ${sbname}`);
       } else {
-        setMessage(`Error: ${data.error}`);
+        setMessage(data.error);
       }
 
     } catch (err) {
-      setMessage('Error: Could not connect to the server. Please try again.');
+      setMessage('Could not connect to the server. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div>
-      <h2>CabsOnline - Book a Taxi</h2>
+    <div className="page">
+      <h2>Book a Taxi</h2>
 
-      <p>
-        <label>Customer Name: </label>
-        <input type="text" value={cname} onChange={(e) => setCname(e.target.value)} />
-      </p>
-      <p>
-        <label>Phone Number: </label>
-        <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} />
-      </p>
-      <p>
-        <label>Unit Number: </label>
-        <input type="text" value={unumber} onChange={(e) => setUnumber(e.target.value)} />
-      </p>
-      <p>
-        <label>Street Number: </label>
-        <input type="text" value={snumber} onChange={(e) => setSnumber(e.target.value)} />
-      </p>
-      <p>
-        <label>Street Name: </label>
-        <input type="text" value={stname} onChange={(e) => setStname(e.target.value)} />
-      </p>
-      <p>
-        <label>Suburb: </label>
-        <input type="text" value={sbname} onChange={(e) => setSbname(e.target.value)} />
-      </p>
-      <p>
-        <label>Destination Suburb: </label>
-        <input type="text" value={dsbname} onChange={(e) => setDsbname(e.target.value)} />
-      </p>
-      <p>
-        <label>Pickup Date (DD/MM/YYYY): </label>
+      <div className="form-row">
+        <label>Customer Name</label>
+        <input type="text" value={cname} onChange={(e) => setCname(e.target.value)} placeholder="John Smith" />
+      </div>
+      <div className="form-row">
+        <label>Phone Number</label>
+        <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0211234567" />
+      </div>
+      <div className="form-row">
+        <label>Unit Number (optional)</label>
+        <input type="text" value={unumber} onChange={(e) => setUnumber(e.target.value)} placeholder="e.g. 4B" />
+      </div>
+      <div className="form-row">
+        <label>Street Number</label>
+        <input type="text" value={snumber} onChange={(e) => setSnumber(e.target.value)} placeholder="e.g. 1" />
+      </div>
+      <div className="form-row">
+        <label>Street Name</label>
+        <input type="text" value={stname} onChange={(e) => setStname(e.target.value)} placeholder="e.g. Queen Street" />
+      </div>
+      <div className="form-row">
+        <label>Suburb (optional)</label>
+        <input type="text" value={sbname} onChange={(e) => setSbname(e.target.value)} placeholder="e.g. Auckland CBD" />
+      </div>
+      <div className="form-row">
+        <label>Destination Suburb (optional)</label>
+        <input type="text" value={dsbname} onChange={(e) => setDsbname(e.target.value)} placeholder="e.g. Northcote" />
+      </div>
+      <div className="form-row">
+        <label>Pickup Date (DD/MM/YYYY)</label>
         <input type="text" value={date} onChange={(e) => setDate(e.target.value)} />
-      </p>
-      <p>
-        <label>Pickup Time (HH:MM): </label>
+      </div>
+      <div className="form-row">
+        <label>Pickup Time (HH:MM)</label>
         <input type="text" value={time} onChange={(e) => setTime(e.target.value)} />
-      </p>
-      <p>
-        <button onClick={submitBooking} disabled={loading}>
+      </div>
+
+      <div className="form-row">
+        <button className="btn-primary" onClick={submitBooking} disabled={loading}>
           {loading ? 'Booking...' : 'Book Taxi'}
         </button>
-      </p>
+      </div>
 
       {message && (
-        <div id="reference">
+        <div className={success ? 'confirmation-box' : 'message-error'}>
+          {success && <h3>Thank you for your booking!</h3>}
           {message.split('\n').map((line, i) => (
             <p key={i}>{line}</p>
           ))}
-          {pickupAddress && <MapView address={pickupAddress} />}
         </div>
       )}
 
+      {pickupAddress && <MapView address={pickupAddress} />}
     </div>
   );
 }

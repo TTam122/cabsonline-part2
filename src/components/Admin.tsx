@@ -16,17 +16,22 @@ export default function Admin() {
   const [bsearch, setBsearch] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [loading, setLoading] = useState(false);
+
+  function showMessage(text: string, type: 'success' | 'error' | 'info') {
+    setMessage(text);
+    setMessageType(type);
+  }
 
   async function searchBooking() {
     setMessage('');
     setBookings([]);
 
-    // Validate BRN format if non-empty
     if (bsearch.trim() !== '') {
       const brnRegex = /^BRN\d{5}$/;
       if (!brnRegex.test(bsearch.trim())) {
-        setMessage('Error: Invalid booking reference number format. Must be in the format BRN00001.');
+        showMessage('Invalid booking reference number format. Must be like BRN00001.', 'error');
         return;
       }
     }
@@ -44,16 +49,16 @@ export default function Admin() {
 
       if (data.success) {
         if (data.bookings.length === 0) {
-          setMessage('No bookings found.');
+          showMessage('No bookings found.', 'info');
         } else {
           setBookings(data.bookings);
         }
       } else {
-        setMessage(`Error: ${data.error}`);
+        showMessage(data.error, 'error');
       }
 
     } catch (err) {
-      setMessage('Error: Could not connect to the server. Please try again.');
+      showMessage('Could not connect to the server. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -70,52 +75,59 @@ export default function Admin() {
       const data = await response.json();
 
       if (data.success) {
-        // Update status in table without re-fetching
         setBookings(prev =>
-          prev.map(b =>
-            b.brn === brn ? { ...b, status: 'assigned' } : b
-          )
+          prev.map(b => b.brn === brn ? { ...b, status: 'assigned' } : b)
         );
-        setMessage(`Congratulations! Booking request ${brn} has been assigned!`);
+        showMessage(`Booking ${brn} has been successfully assigned!`, 'success');
       } else {
-        setMessage(`Error: ${data.error}`);
+        showMessage(data.error, 'error');
       }
 
     } catch (err) {
-      setMessage('Error: Could not connect to the server. Please try again.');
+      showMessage('Could not connect to the server. Please try again.', 'error');
     }
   }
 
-  return (
-    <div>
-      <h2>CabsOnline - Admin Panel</h2>
+  function getBadgeClass(status: string) {
+    if (status === 'assigned') return 'badge badge-assigned';
+    if (status === 'paid') return 'badge badge-paid';
+    return 'badge badge-unassigned';
+  }
 
-      <p>
-        <label>Booking Reference Number: </label>
+  return (
+    <div className="page">
+      <h2>Admin Panel</h2>
+
+      <div className="search-row">
         <input
           type="text"
           name="bsearch"
           value={bsearch}
           onChange={(e) => setBsearch(e.target.value.toUpperCase())}
-          placeholder="e.g. BRN00001 or leave empty"
+          placeholder="BRN00001 or leave empty for upcoming"
         />
-        <button name="sbutton" onClick={searchBooking} disabled={loading}>
+        <button
+          name="sbutton"
+          className="btn-primary"
+          onClick={searchBooking}
+          disabled={loading}
+        >
           {loading ? 'Searching...' : 'Search Booking'}
         </button>
-      </p>
+      </div>
 
       {message && (
-        <p style={{ color: message.startsWith('Error') ? 'red' : 'green' }}>
+        <div className={`message-${messageType}`}>
           {message}
-        </p>
+        </div>
       )}
 
       {bookings.length > 0 && (
         <div className="content">
-          <table border={1}>
+          <table className="data-table">
             <thead>
               <tr>
-                <th>Booking Reference Number</th>
+                <th>Booking Reference</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
                 <th>Pickup Suburb</th>
@@ -134,14 +146,14 @@ export default function Admin() {
                   <td>{booking.sbname || 'Not specified'}</td>
                   <td>{booking.dsbname || 'Not specified'}</td>
                   <td>{booking.pickup_date} {booking.pickup_time}</td>
-                  <td style={{
-                    color: booking.status === 'assigned' ? 'green' : 'orange',
-                    fontWeight: 'bold'
-                  }}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  <td>
+                    <span className={getBadgeClass(booking.status)}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </span>
                   </td>
                   <td>
                     <button
+                      className="btn-secondary"
                       id={`btn-${booking.brn}`}
                       onClick={() => assignBooking(booking.brn)}
                       disabled={booking.status === 'assigned'}

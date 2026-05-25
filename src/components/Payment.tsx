@@ -4,7 +4,6 @@ import { API_URL } from '../config';
 interface Booking {
   brn: string;
   cname: string;
-  phone: string;
   sbname: string;
   dsbname: string;
   pickup_date: string;
@@ -19,7 +18,6 @@ export default function Payment() {
   const [loading, setLoading] = useState(false);
   const [paid, setPaid] = useState(false);
 
-  // Payment form fields
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -69,35 +67,33 @@ export default function Payment() {
   async function submitPayment() {
     setError('');
 
-    // Validate card fields
     if (cardName.trim() === '') {
-      setError('Error: Card holder name is required.');
+      setError('Card holder name is required.');
       return;
     }
 
     const cardRegex = /^\d{16}$/;
     if (!cardRegex.test(cardNumber.replace(/\s/g, ''))) {
-      setError('Error: Card number must be exactly 16 digits.');
+      setError('Card number must be exactly 16 digits.');
       return;
     }
 
     const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
     if (!expiryRegex.test(expiry)) {
-      setError('Error: Expiry date must be in MM/YY format.');
+      setError('Expiry date must be in MM/YY format.');
       return;
     }
 
-    // Check expiry not in the past
     const [expMonth, expYear] = expiry.split('/');
     const expiryDate = new Date(2000 + parseInt(expYear), parseInt(expMonth) - 1);
     if (expiryDate < new Date()) {
-      setError('Error: Card has expired.');
+      setError('Card has expired.');
       return;
     }
 
     const cvvRegex = /^\d{3}$/;
     if (!cvvRegex.test(cvv)) {
-      setError('Error: CVV must be exactly 3 digits.');
+      setError('CVV must be exactly 3 digits.');
       return;
     }
 
@@ -127,32 +123,29 @@ export default function Payment() {
   }
 
   return (
-    <div>
-      <h2>CabsOnline - Payment</h2>
+    <div className="page">
+      <h2>Payment</h2>
 
-      {/* BRN Lookup */}
       {!booking && !paid && (
-        <p>
-          <label>Booking Reference Number: </label>
+        <div className="search-row">
           <input
             type="text"
             value={brn}
             onChange={(e) => setBrn(e.target.value.toUpperCase())}
             placeholder="e.g. BRN00001"
           />
-          <button onClick={lookupBooking} disabled={loading}>
+          <button className="btn-primary" onClick={lookupBooking} disabled={loading}>
             {loading ? 'Looking up...' : 'Look Up Booking'}
           </button>
-        </p>
+        </div>
       )}
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="message-error">{error}</div>}
 
-      {/* Booking Summary */}
       {booking && (
-        <div>
+        <>
           <h3>Booking Summary</h3>
-          <table border={1}>
+          <table className="details-table">
             <tbody>
               <tr>
                 <th>Booking Reference</th>
@@ -181,19 +174,18 @@ export default function Payment() {
             </tbody>
           </table>
 
-          {/* Payment Form */}
           <h3>Payment Details</h3>
-          <p>
-            <label>Card Holder Name: </label>
+          <div className="form-row">
+            <label>Card Holder Name</label>
             <input
               type="text"
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
               placeholder="John Smith"
             />
-          </p>
-          <p>
-            <label>Card Number: </label>
+          </div>
+          <div className="form-row">
+            <label>Card Number</label>
             <input
               type="text"
               value={cardNumber}
@@ -201,9 +193,9 @@ export default function Payment() {
               placeholder="1234567890123456"
               maxLength={16}
             />
-          </p>
-          <p>
-            <label>Expiry Date (MM/YY): </label>
+          </div>
+          <div className="form-row">
+            <label>Expiry Date (MM/YY)</label>
             <input
               type="text"
               value={expiry}
@@ -211,30 +203,30 @@ export default function Payment() {
               placeholder="12/27"
               maxLength={5}
             />
-          </p>
-          <p>
-            <label>CVV: </label>
+          </div>
+          <div className="form-row">
+            <label>CVV</label>
             <input
               type="password"
               value={cvv}
               onChange={(e) => setCvv(e.target.value)}
-              placeholder="123"
+              placeholder="•••"
               maxLength={3}
             />
-          </p>
-          <p>
-            <button onClick={submitPayment} disabled={loading}>
+          </div>
+          <div className="form-row">
+            <button className="btn-primary" onClick={submitPayment} disabled={loading}>
               {loading ? 'Processing...' : 'Pay Now'}
             </button>
-          </p>
-        </div>
+          </div>
+        </>
       )}
 
-      {/* Confirmation */}
       {paid && (
-        <div style={{ color: 'green' }}>
+        <div className="confirmation-box">
           <h3>Payment Successful!</h3>
-          <p>Thank you for your payment. Your booking reference was {brn}.</p>
+          <p>Thank you for your payment.</p>
+          <p>Booking reference: {brn}</p>
           <p>Your taxi has been confirmed. Have a safe journey!</p>
         </div>
       )}

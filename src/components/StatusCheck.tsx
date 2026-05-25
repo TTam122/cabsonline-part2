@@ -23,16 +23,12 @@ export default function StatusCheck() {
   const [loading, setLoading] = useState(false);
 
   async function checkStatus() {
-    // Reset previous results
     setBooking(null);
     setError('');
 
-    // Validate BRN format
     const brnRegex = /^BRN\d{5}$/;
     if (!brnRegex.test(brn)) {
-      setError(
-        'Invalid format. Please enter a reference number like BRN00001.'
-      );
+      setError('Invalid format. Please enter a reference number like BRN00001.');
       return;
     }
 
@@ -54,79 +50,79 @@ export default function StatusCheck() {
     }
   }
 
+  function getBadgeClass(status: string) {
+    if (status === 'assigned') return 'badge badge-assigned';
+    if (status === 'paid') return 'badge badge-paid';
+    return 'badge badge-unassigned';
+  }
+
   return (
-    <div>
+    <div className="page">
       <h2>Check Booking Status</h2>
 
-      <p>
-        <label htmlFor="brn">Booking Reference Number: </label>
+      <div className="search-row">
         <input
           type="text"
-          id="brn"
           value={brn}
           onChange={(e) => setBrn(e.target.value.toUpperCase())}
           placeholder="e.g. BRN00001"
         />
-        <button onClick={checkStatus} disabled={loading}>
+        <button className="btn-primary" onClick={checkStatus} disabled={loading}>
           {loading ? 'Checking...' : 'Check Status'}
         </button>
-      </p>
+      </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {booking && (
-        <table border={1}>
-          <tbody>
-            <tr>
-              <th>Booking Reference</th>
-              <td>{booking.brn}</td>
-            </tr>
-            <tr>
-              <th>Customer Name</th>
-              <td>{booking.cname}</td>
-            </tr>
-            <tr>
-              <th>Phone</th>
-              <td>{booking.phone}</td>
-            </tr>
-            <tr>
-              <th>Pickup Address</th>
-              <td>
-                {booking.unumber ? booking.unumber + '/' : ''}
-                {booking.snumber} {booking.stname}
-                {booking.sbname ? ', ' + booking.sbname : ''}
-              </td>
-            </tr>
-            <tr>
-              <th>Destination</th>
-              <td>{booking.dsbname || 'Not specified'}</td>
-            </tr>
-            <tr>
-              <th>Pickup Date</th>
-              <td>{booking.pickup_date}</td>
-            </tr>
-            <tr>
-              <th>Pickup Time</th>
-              <td>{booking.pickup_time}</td>
-            </tr>
-            <tr>
-              <th>Status</th>
-              <td
-                style={{
-                  color: booking.status === 'assigned' ? 'green' : 'orange',
-                  fontWeight: 'bold',
-                }}
-              >
-                {booking.status.charAt(0).toUpperCase() +
-                  booking.status.slice(1)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      )}
+      {error && <div className="message-error">{error}</div>}
 
       {booking && (
-        <MapView address={`${booking.snumber} ${booking.stname} ${booking.sbname}`} />
+        <>
+          <table className="details-table">
+            <tbody>
+              <tr>
+                <th>Booking Reference</th>
+                <td>{booking.brn}</td>
+              </tr>
+              <tr>
+                <th>Customer Name</th>
+                <td>{booking.cname}</td>
+              </tr>
+              <tr>
+                <th>Phone</th>
+                <td>{booking.phone}</td>
+              </tr>
+              <tr>
+                <th>Pickup Address</th>
+                <td>
+                  {booking.unumber ? booking.unumber + '/' : ''}
+                  {booking.snumber} {booking.stname}
+                  {booking.sbname ? ', ' + booking.sbname : ''}
+                </td>
+              </tr>
+              <tr>
+                <th>Destination</th>
+                <td>{booking.dsbname || 'Not specified'}</td>
+              </tr>
+              <tr>
+                <th>Pickup Date</th>
+                <td>{booking.pickup_date}</td>
+              </tr>
+              <tr>
+                <th>Pickup Time</th>
+                <td>{booking.pickup_time}</td>
+              </tr>
+              <tr>
+                <th>Status</th>
+                <td>
+                  <span className={getBadgeClass(booking.status)}>
+                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <MapView address={`${booking.snumber} ${booking.stname} ${booking.sbname}`} />
+        </>
       )}
     </div>
   );
