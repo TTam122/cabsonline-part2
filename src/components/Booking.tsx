@@ -48,8 +48,35 @@ export default function Booking() {
 
     const dateParts = date.split('/');
     const timeParts = time.split(':');
+
     if (dateParts.length !== 3 || timeParts.length !== 2) {
       setMessage('Please enter date as DD/MM/YYYY and time as HH:MM.');
+      return;
+    }
+
+    // Validate time range
+    const hours = parseInt(timeParts[0]);
+    const minutes = parseInt(timeParts[1]);
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      setMessage('Please enter a valid time between 00:00 and 23:59.');
+      return;
+    }
+
+    // Validate date range
+    const day = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]);
+    const year = parseInt(dateParts[2]);
+
+    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2024) {
+      setMessage('Please enter a valid date in DD/MM/YYYY format.');
+      return;
+    }
+
+    // Check days in month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day > daysInMonth) {
+      setMessage(`Invalid date: month ${month} does not have ${day} days.`);
       return;
     }
 
