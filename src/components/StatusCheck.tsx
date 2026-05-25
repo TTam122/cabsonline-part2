@@ -38,7 +38,7 @@ export default function StatusCheck() {
 
     try {
       const response = await fetch(
-        `https://webdev.aut.ac.nz/~pqx9938/assign/status.php?brn=${brn}`
+        `https://cabsonline-part2-production.up.railway.app/api/status?brn=${brn}`
       );
       const data = await response.json();
 
