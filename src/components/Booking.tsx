@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '../config';
+import MapView from './MapView';
 
 export default function Booking() {
   const [cname, setCname] = useState('');
@@ -13,6 +14,7 @@ export default function Booking() {
   const [time, setTime] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pickupAddress, setPickupAddress] = useState('');
 
   // Pre-fill date and time on load
   useEffect(() => {
@@ -108,6 +110,7 @@ export default function Booking() {
           `Pickup time: ${data.pickup_time}\n` +
           `Pickup date: ${data.pickup_date}`
         );
+        setPickupAddress(`${snumber} ${stname} ${sbname}`);
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -170,6 +173,7 @@ export default function Booking() {
           {message.split('\n').map((line, i) => (
             <p key={i}>{line}</p>
           ))}
+          {pickupAddress && <MapView address={pickupAddress} />}
         </div>
       )}
 

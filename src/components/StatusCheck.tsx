@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { API_URL } from '../config';
+import MapView from './MapView';
 
 interface Booking {
   brn: string;
@@ -122,6 +123,10 @@ export default function StatusCheck() {
             </tr>
           </tbody>
         </table>
+      )}
+
+      {booking && (
+        <MapView address={`${booking.snumber} ${booking.stname} ${booking.sbname}`} />
       )}
     </div>
   );
