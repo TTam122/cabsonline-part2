@@ -150,10 +150,7 @@ app.post('/api/admin/search', async (req, res) => {
       [rows] = await db.execute('SELECT * FROM bookings WHERE id = ?', [id]);
     } else {
       [rows] = await db.execute(
-        `SELECT * FROM bookings 
-         WHERE TIMESTAMP(pickup_date, pickup_time) 
-         BETWEEN DATE_ADD(NOW(), INTERVAL 12 HOUR) 
-         AND DATE_ADD(NOW(), INTERVAL 14 HOUR)`
+        `SELECT * FROM bookings WHERE TIMESTAMP(pickup_date, pickup_time) BETWEEN DATE_ADD(NOW(), INTERVAL 12 HOUR) AND DATE_ADD(NOW(), INTERVAL 14 HOUR)`
     );
     }
 
