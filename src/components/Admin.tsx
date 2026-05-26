@@ -156,7 +156,7 @@ export default function Admin() {
                       className="btn-secondary"
                       id={`btn-${booking.brn}`}
                       onClick={() => assignBooking(booking.brn)}
-                      disabled={booking.status === 'assigned'}
+                      disabled={booking.status === 'assigned' || booking.status === 'paid'}
                     >
                       Assign
                     </button>
